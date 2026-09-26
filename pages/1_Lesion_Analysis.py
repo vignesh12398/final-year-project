@@ -394,60 +394,49 @@ if uploaded_file is not None:
 
 
         # ====================================================
-        # INDIVIDUAL REGION DETAILS
-        # ====================================================
+# INDIVIDUAL REGION DETAILS
+# ====================================================
 
         st.subheader(
             "Region Details"
         )
-
-
+        
+        
         for index, region in enumerate(
             regions
         ):
-
-            region_percentage = (
-
-                region["area"] /
-                infected_pixels
-
-            ) * 100 if infected_pixels > 0 else 0
-
-
+        
             st.markdown(
                 f"### Region {index + 1}"
             )
-
-
+        
+        
             col1, col2, col3 = st.columns(3)
-
-
+        
+        
             with col1:
-
+        
                 st.metric(
                     "Area",
                     f"{region['area']} pixels"
                 )
-
-
+        
+        
             with col2:
-
-    st.metric(
-        "Confidence Score",
-        f"{region['confidence']:.2f}%"
-    )
-
-
-
-
+        
+                st.metric(
+                    "Confidence Score",
+                    f"{region['confidence']:.2f}%"
+                )
+        
+        
             with col3:
-
+        
                 st.metric(
                     "Region Size",
                     f"{region['width']} × "
                     f"{region['height']}"
                 )
-
 
         # ====================================================
         # LARGEST REGION
