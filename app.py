@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import tensorflow as tf
 from PIL import Image
+import os
 
 
 # =========================================================
@@ -22,20 +23,31 @@ st.set_page_config(
 
 @st.cache_resource
 def load_model():
+
     model = tf.keras.models.load_model(
         "attention_unet_model.keras",
         compile=False
     )
+
     return model
 
 
 try:
+
     model = load_model()
-    st.sidebar.success("Model loaded successfully")
+
+    st.sidebar.success(
+        "Model loaded successfully"
+    )
 
 except Exception as e:
-    st.error("Could not load the model.")
+
+    st.error(
+        "Could not load the model."
+    )
+
     st.exception(e)
+
     st.stop()
 
 
@@ -43,7 +55,9 @@ except Exception as e:
 # MAIN TITLE
 # =========================================================
 
-st.title("🫁 COVID-19 Lung CT Scan Image Segmentation")
+st.title(
+    "🫁 COVID-19 Lung CT Scan Image Segmentation"
+)
 
 st.write(
     "Upload a CT scan image to segment and localize "
@@ -68,8 +82,14 @@ uploaded_file = st.file_uploader(
 
 if uploaded_file is not None:
 
+    # -----------------------------------------------------
     # Read image
-    image = Image.open(uploaded_file).convert("L")
+    # -----------------------------------------------------
+
+    image = Image.open(
+        uploaded_file
+    ).convert("L")
+
     original_image = np.array(image)
 
 
@@ -77,7 +97,9 @@ if uploaded_file is not None:
     # ORIGINAL CT IMAGE
     # =====================================================
 
-    st.subheader("1️⃣ Original CT Image")
+    st.subheader(
+        "1️⃣ Original CT Image"
+    )
 
     st.image(
         original_image,
@@ -114,7 +136,9 @@ if uploaded_file is not None:
     # MODEL PREDICTION
     # =====================================================
 
-    with st.spinner("Analyzing CT image..."):
+    with st.spinner(
+        "Analyzing CT image..."
+    ):
 
         prediction = model.predict(
             input_image,
@@ -136,23 +160,124 @@ if uploaded_file is not None:
 
 
     # =====================================================
+    # GROUND TRUTH MASK
+    # =====================================================
+
+    st.subheader(
+        "2️⃣ Ground Truth Mask"
+    )
+
+    # Get uploaded file name
+    file_name = uploaded_file.name
+
+    # Ground truth directory
+    ground_truth_dir = "ground_truth"
+
+    ground_truth_path = os.path.join(
+        ground_truth_dir,
+        file_name
+    )
+
+
+    if os.path.exists(ground_truth_path):
+
+        # Read ground truth
+        ground_truth = cv2.imread(
+            ground_truth_path,
+            cv2.IMREAD_GRAYSCALE
+        )
+
+        # Resize to model output size
+        ground_truth = cv2.resize(
+            ground_truth,
+            (128, 128),
+            interpolation=cv2.INTER_NEAREST
+        )
+
+        # Convert to binary mask
+        ground_truth_mask = (
+            ground_truth > 127
+        ).astype(np.uint8)
+
+
+        st.image(
+            ground_truth_mask * 255,
+            caption="Ground Truth Infection Mask",
+            clamp=True,
+            width=500
+        )
+
+        ground_truth_available = True
+
+    else:
+
+        st.warning(
+            f"Ground truth mask not found for "
+            f"'{file_name}'."
+        )
+
+        st.info(
+            "Make sure the ground truth mask is stored "
+            f"at: {ground_truth_path}"
+        )
+
+        ground_truth_available = False
+
+
+    # =====================================================
     # PREDICTED INFECTION MASK
     # =====================================================
 
-    st.subheader("2️⃣ Predicted Infection Mask")
+    st.subheader(
+        "3️⃣ Predicted Infection Mask"
+    )
 
     st.image(
         pred_mask * 255,
+        caption="Attention U-Net Prediction",
         clamp=True,
         width=500
     )
 
 
     # =====================================================
+    # COMPARISON
+    # =====================================================
+
+    if ground_truth_available:
+
+        st.subheader(
+            "4️⃣ Ground Truth vs Prediction"
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            st.image(
+                ground_truth_mask * 255,
+                caption="Ground Truth",
+                clamp=True,
+                width=500
+            )
+
+        with col2:
+
+            st.image(
+                pred_mask * 255,
+                caption="Predicted Mask",
+                clamp=True,
+                width=500
+            )
+
+
+    # =====================================================
     # EXPLAINABLE INFECTION LOCALIZATION
     # =====================================================
 
-    st.subheader("3️⃣ Explainable Infection Localization")
+    st.subheader(
+        "5️⃣ Explainable Infection Localization"
+    )
 
     st.write(
         "The highlighted regions show where the "
@@ -178,10 +303,11 @@ if uploaded_file is not None:
     )
 
 
-    # Create overlay
-    overlay = np.zeros_like(original_rgb)
+    # Create red overlay
+    overlay = np.zeros_like(
+        original_rgb
+    )
 
-    # Red channel
     overlay[:, :, 0] = 255
 
 
@@ -235,7 +361,9 @@ if uploaded_file is not None:
 
     if infection_percentage == 0:
 
-        infection_extent = "No Detected Infection"
+        infection_extent = (
+            "No Detected Infection"
+        )
 
     elif infection_percentage <= 1:
 
@@ -267,7 +395,9 @@ if uploaded_file is not None:
     # PREDICTION RESULT
     # =====================================================
 
-    st.subheader("4️⃣ Prediction")
+    st.subheader(
+        "6️⃣ Prediction"
+    )
 
     if result == "INFECTED":
 
@@ -286,7 +416,9 @@ if uploaded_file is not None:
     # INFECTION ANALYSIS
     # =====================================================
 
-    st.subheader("5️⃣ Infection Analysis")
+    st.subheader(
+        "7️⃣ Infection Analysis"
+    )
 
     col1, col2, col3 = st.columns(3)
 
@@ -313,6 +445,88 @@ if uploaded_file is not None:
             "Infection Extent",
             infection_extent
         )
+
+
+    # =====================================================
+    # GROUND TRUTH METRICS
+    # =====================================================
+
+    if ground_truth_available:
+
+        st.subheader(
+            "8️⃣ Segmentation Comparison"
+        )
+
+        gt_pixels = int(
+            np.sum(ground_truth_mask)
+        )
+
+        predicted_pixels = int(
+            np.sum(pred_mask)
+        )
+
+
+        # Intersection
+        intersection = np.logical_and(
+            ground_truth_mask,
+            pred_mask
+        ).sum()
+
+
+        # Union
+        union = np.logical_or(
+            ground_truth_mask,
+            pred_mask
+        ).sum()
+
+
+        # Dice Score
+        dice = (
+            (2 * intersection) /
+            (gt_pixels + predicted_pixels + 1e-7)
+        )
+
+
+        # IoU
+        iou = (
+            intersection /
+            (union + 1e-7)
+        )
+
+
+        col1, col2, col3, col4 = st.columns(4)
+
+
+        with col1:
+
+            st.metric(
+                "GT Pixels",
+                gt_pixels
+            )
+
+
+        with col2:
+
+            st.metric(
+                "Predicted Pixels",
+                predicted_pixels
+            )
+
+
+        with col3:
+
+            st.metric(
+                "Dice Score",
+                f"{dice:.4f}"
+            )
+
+
+        with col4:
+
+            st.metric(
+                "IoU",
+                f"{iou:.4f}"
+            )
 
 
 # =========================================================
