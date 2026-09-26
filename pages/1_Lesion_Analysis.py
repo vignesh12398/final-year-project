@@ -223,22 +223,28 @@ if uploaded_file is not None:
         ][1]
 
 
+        # ========================================================
+# CONFIDENCE SCORE FOR THIS REGION
+# ========================================================
+
+        region_pixels = (
+            labels == label
+        )
+        
+        confidence_score = (
+            np.mean(prediction[region_pixels]) * 100
+        )
+        
+        
         regions.append({
-
             "area": int(area),
-
             "x": int(x),
-
             "y": int(y),
-
             "width": int(width),
-
             "height": int(height),
-
             "center_x": center_x,
-
-            "center_y": center_y
-
+            "center_y": center_y,
+            "confidence": confidence_score
         })
 
 
@@ -426,10 +432,12 @@ if uploaded_file is not None:
 
             with col2:
 
-                st.metric(
-                    "Area Contribution",
-                    f"{region_percentage:.2f}%"
-                )
+    st.metric(
+        "Confidence Score",
+        f"{region['confidence']:.2f}%"
+    )
+
+
 
 
             with col3:
