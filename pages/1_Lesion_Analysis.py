@@ -316,48 +316,46 @@ if uploaded_file is not None:
     # REGION VISUALIZATION
     # ========================================================
 
-    if number_of_regions > 0:
+    # ========================================================
+# REGION VISUALIZATION
+# ========================================================
 
+    if number_of_regions > 0:
+    
         st.subheader(
             "Detected Infection Regions"
         )
-
-
-        # Resize image to model dimensions
-
+    
+        # Resize image to a larger display size
+        display_size = 512
+        scale = display_size / 128
+    
         region_image = cv2.resize(
             original_image,
-            (128, 128)
+            (display_size, display_size)
         )
-
-
+    
         # Convert grayscale → RGB
-
         region_image = cv2.cvtColor(
             region_image,
             cv2.COLOR_GRAY2RGB
         )
-
-
+    
         # ----------------------------------------------------
         # DRAW REGIONS
         # ----------------------------------------------------
-
+    
         for index, region in enumerate(
             regions
         ):
-
-            x = region["x"]
-
-            y = region["y"]
-
-            width = region["width"]
-
-            height = region["height"]
-
-
+    
+            # Scale coordinates from 128×128 to 512×512
+            x = int(region["x"] * scale)
+            y = int(region["y"] * scale)
+            width = int(region["width"] * scale)
+            height = int(region["height"] * scale)
+    
             # Draw bounding box
-
             cv2.rectangle(
                 region_image,
                 (x, y),
@@ -366,49 +364,46 @@ if uploaded_file is not None:
                     y + height
                 ),
                 (255, 0, 0),
-                1
+                2
             )
-
-
-            # Region label
-
-           # Region label
-
+    
+            # Region label + confidence
+            label = (
+                f"R{index + 1}: "
+                f"{region['confidence']:.1f}%"
+            )
+    
+            # Text position
+            text_x = x
+            text_y = max(y - 10, 25)
+    
+            # Black outline for readability
             cv2.putText(
                 region_image,
-                f"R{index + 1}",
-                (
-                    x,
-                    max(y - 18, 10)
-                ),
-            cv2.FONT_HERSHEY_SIMPLEX,
-                0.4,
-                (255, 0, 0),
-                1
-            )
-            
-            # Confidence score
-            
-            cv2.putText(
-                region_image,
-                f"{region['confidence']:.1f}%",
-                (
-                    x,
-                    min(y + height + 14, 125)
-                ),
+                label,
+                (text_x, text_y),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.35,
-                (255, 0, 0),
-                1
+                0.65,
+                (0, 0, 0),
+                4
             )
-
-
+    
+            # Red text
+            cv2.putText(
+                region_image,
+                label,
+                (text_x, text_y),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.65,
+                (255, 0, 0),
+                2
+            )
+    
         st.image(
             region_image,
-            caption="Individual predicted infection regions",
+            caption="Individual predicted infection regions with region-level confidence scores",
             width=600
         )
-
 
         # ====================================================
 # INDIVIDUAL REGION DETAILS
