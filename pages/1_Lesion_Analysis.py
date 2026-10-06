@@ -372,15 +372,32 @@ if uploaded_file is not None:
 
             # Region label
 
+           # Region label
+
             cv2.putText(
                 region_image,
                 f"R{index + 1}",
                 (
                     x,
-                    max(y - 4, 10)
+                    max(y - 18, 10)
+                ),
+            cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,
+                (255, 0, 0),
+                1
+            )
+            
+            # Confidence score
+            
+            cv2.putText(
+                region_image,
+                f"{region['confidence']:.1f}%",
+                (
+                    x,
+                    min(y + height + 14, 125)
                 ),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.4,
+                0.35,
                 (255, 0, 0),
                 1
             )
